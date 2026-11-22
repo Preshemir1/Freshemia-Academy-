@@ -1,0 +1,29 @@
+{
+  "name": "freshemia-academy",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Freshemia Academy admissions portal — public website, applicant portal and administrator console in one Node application.",
+  "main": "server.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node build.js && node server.js",
+    "build": "node build.js",
+    "serve": "node server.js",
+    "dev": "node build.js && node --watch server.js",
+    "reset": "node scripts/reset.js",
+    "smoke": "node scripts/smoke.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  },
+  "keywords": [
+    "admissions",
+    "portal",
+    "education",
+    "nigeria",
+    "express"
+  ],
+  "license": "UNLICENSED"
+}

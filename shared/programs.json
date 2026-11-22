@@ -1,0 +1,65 @@
+{
+  "cybersecurity": {
+    "id": "cybersecurity",
+    "code": "CYB",
+    "name": "Cybersecurity",
+    "school": "School of Computing & Cyber Sciences",
+    "accent": "cyber",
+    "award": "Advanced Diploma in Cybersecurity",
+    "duration": "24 months (4 semesters)",
+    "fee": "₦185,000 per session",
+    "summary": "Defensive security engineering: network defence, ethical hacking, digital forensics, governance, risk and compliance.",
+    "entry": "Five O'level credits including English and Mathematics, or a recognised foundation certificate.",
+    "modules": [
+      "Network Security",
+      "Ethical Hacking",
+      "Digital Forensics",
+      "GRC & ISO 27001",
+      "Cloud Security"
+    ],
+    "feeAmount": 185000,
+    "feePeriod": "per session"
+  },
+  "artificial_intelligence": {
+    "id": "artificial_intelligence",
+    "code": "AIX",
+    "name": "Artificial Intelligence",
+    "school": "School of Computing & Cyber Sciences",
+    "accent": "ai",
+    "award": "Advanced Diploma in Artificial Intelligence",
+    "duration": "24 months (4 semesters)",
+    "fee": "₦205,000 per session",
+    "summary": "Machine learning engineering, data science, deep learning, MLOps and applied generative AI for industry.",
+    "entry": "Five O'level credits including English, Mathematics and a science subject, or a recognised foundation certificate.",
+    "modules": [
+      "Python & Data Engineering",
+      "Machine Learning",
+      "Deep Learning",
+      "MLOps",
+      "Applied Generative AI"
+    ],
+    "feeAmount": 205000,
+    "feePeriod": "per session"
+  },
+  "computer_operator": {
+    "id": "computer_operator",
+    "code": "COP",
+    "name": "Computer Operator",
+    "school": "School of Information Technology",
+    "accent": "cop",
+    "award": "Professional Certificate in Computer Operations",
+    "duration": "6 months (2 terms)",
+    "fee": "₦75,000 per term",
+    "summary": "Practical office computing: documents, spreadsheets, data entry, digital records and helpdesk essentials.",
+    "entry": "Three O'level credits including English, and basic literacy in computing.",
+    "modules": [
+      "Computer Fundamentals",
+      "Word Processing",
+      "Spreadsheets & Records",
+      "Internet & Email",
+      "Data Entry Practice"
+    ],
+    "feeAmount": 75000,
+    "feePeriod": "per term"
+  }
+}

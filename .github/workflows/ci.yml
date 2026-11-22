@@ -1,0 +1,27 @@
+name: Checks
+
+# Rebuilds the single-file website and runs the end-to-end smoke test on every
+# push and pull request, so a broken build never reaches a live portal.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Build public/index.html
+        run: node build.js
+      - name: Fail if the committed artefact is out of date
+        run: git diff --exit-code -- public/index.html
+      - name: Smoke test the API
+        run: npm run smoke

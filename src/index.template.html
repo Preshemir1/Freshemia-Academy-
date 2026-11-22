@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230b2545'/%3E%3Cpath d='M32 12l16 5v13c0 10.5-7 17.5-16 21-9-3.5-16-10.5-16-21V17z' fill='none' stroke='%23c9a227' stroke-width='3'/%3E%3Cpath d='M23 27h18M23 32h18M23 37h11' stroke='%23e0cd92' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<title>Freshemia Academy — Admissions Portal</title>
+<meta name="description" content="Freshemia Academy — apply for admission into Cybersecurity, Artificial Intelligence or Computer Operations. Track your application, receive your admission letter and student identity card.">
+<script>
+  /* theme is applied before paint so there is no light flash */
+  try { if (localStorage.getItem('fa_theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark'); } catch (e) {}
+</script>
+<style>
+/* @@APP_CSS@@ */
+</style>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 3 58 11v20c0 15-11 26-26 30C17 57 6 46 6 31V11z' fill='%230b2545'/%3E%3Cpath d='M20 26h24M20 31h24M20 36h16' stroke='%23b8912f' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+  <meta name="generator" content="Freshemia Academy single-file build">
+</head>
+<body>
+
+<!-- Shown only when the file is opened without the API server (offline demo mode) -->
+<div id="demoBanner" class="demo-banner no-print hidden">
+  <div class="wrap">
+    <span><b>Offline preview.</b> No portal server detected — accounts and applications are saved in <b>this browser only</b>. Run <code>npm start</code> for the live multi-user portal.</span>
+    <button id="dismissDemo" style="font:inherit;font-weight:800;color:#6d4c07;background:none;border:1px solid rgba(109,76,7,.35);border-radius:6px;padding:3px 10px;cursor:pointer;white-space:nowrap">Dismiss</button>
+  </div>
+</div>
+
+<!-- ============================== SHARED CHROME ============================== -->
+<div class="topstrip no-print">
+  <div class="wrap">
+    <div><span class="hide-sm">Admissions hotline</span> <a href="tel:+2348030001122">+234 803 000 1122</a><span class="dot hide-sm">•</span><a href="mailto:admissions@freshemiaacademy.edu.ng" class="hide-sm">admissions@freshemiaacademy.edu.ng</a></div>
+    <div><a href="#/verify" class="hide-sm">Verify an admission letter</a><span class="dot hide-sm">•</span><a href="#/staff">Staff &amp; administrator</a></div>
+  </div>
+</div>
+
+<header class="site-header no-print">
+  <div class="wrap">
+    <a href="#/" class="brand">
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <path d="M32 3 58 11v20c0 15-11 26-26 30C17 57 6 46 6 31V11z" fill="#0b2545"/>
+        <path d="M32 7.5 53.5 14v17c0 12.6-9.2 22.3-21.5 25.9C19.7 53.3 10.5 43.6 10.5 31V14z" fill="none" stroke="#b8912f" stroke-width="1.6"/>
+        <path d="M21 25.5h22M21 30.5h22M21 35.5h14" stroke="#e0cd92" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M32 17l2.4 3.4h-4.8z" fill="#b8912f"/>
+      </svg>
+      <span>
+        <span class="brand-name">Freshemia Academy</span>
+        <span class="brand-sub">Jos · Plateau State · Nigeria</span>
+      </span>
+    </a>
+    <nav class="nav" id="mainNav">
+      <a href="#/">Home</a>
+      <a href="#/#programmes">Programmes</a>
+      <a href="#/#admissions">Admissions</a>
+      <a href="#/#about">About</a>
+      <a href="#/verify">Verify</a>
+      <span class="sep"></span>
+      <a href="#/signin" id="navSignin">Sign in</a>
+      <a href="#/signup" class="btn btn-gold btn-sm" id="navApply">Apply now</a>
+      <a href="#/dashboard" class="btn btn-outline btn-sm hidden" id="navPortal">My portal</a>
+      <a href="#/admin" class="btn btn-admin btn-sm hidden" id="navAdmin">Admin console</a>
+      <button class="theme-toggle" type="button" aria-label="Switch between light and dark mode" title="Light / dark mode">
+        <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6"/></svg>
+        <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+      </button>
+    </nav>
+    <button class="theme-toggle theme-toggle-mobile" type="button" aria-label="Switch between light and dark mode" title="Light / dark mode">
+      <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6"/></svg>
+      <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+    </button>
+    <button class="nav-toggle" id="navToggle" aria-label="Menu">☰</button>
+  </div>
+</header>
+
+<main id="app">
+
+  <!-- ============================== HOME ============================== -->
+  <div class="view" id="view-home">
+    <section class="hero" style="padding:0">
+      <span class="orb o1" aria-hidden="true"></span>
+      <span class="orb o2" aria-hidden="true"></span>
+      <span class="orb o3" aria-hidden="true"></span>
+      <div class="wrap">
+        <div>
+          <span class="pill-open"><span class="live"></span> 2026 / 2027 admissions open</span>
+          <h1 style="margin-top:18px">An academy built for the <em>technologies</em> that will define the next decade.</h1>
+          <p class="lede">Freshemia Academy trains the next generation of cyber defenders, AI engineers and digital operators — with industry-led curricula, laboratory practice and recognised professional awards. Apply online in minutes and track your admission in real time.</p>
+          <div class="hero-actions">
+            <a href="#/signup" class="btn btn-gold">Start your application</a>
+            <a href="#/#programmes" class="btn btn-glass">Explore programmes</a>
+            <a href="#/admin" class="btn btn-glass btn-staff">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9.5 12l1.8 1.8L15 10"/></svg>
+              Administrator console
+            </a>
+          </div>
+          <div class="hero-note">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6ee7a5" stroke-width="2.4"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Applications reviewed within 48 working hours by the Admissions Board.
+          </div>
+        </div>
+        <aside class="hero-card">
+          <h3>Admission at a glance</h3>
+          <p class="hint">2026 / 2027 academic session</p>
+          <div class="row"><span>Application fee</span><span>Free</span></div>
+          <div class="row"><span>Programmes</span><span>3 schools</span></div>
+          <div class="row"><span>Mode of study</span><span>On-campus &amp; hybrid</span></div>
+          <div class="row"><span>Decision time</span><span>48 hours</span></div>
+          <div class="row"><span>Required upload</span><span>Passport photograph</span></div>
+          <a href="#/signup" class="btn btn-gold btn-block foot">Create your applicant account</a>
+        </aside>
+      </div>
+    </section>
+
+    <div class="statband">
+      <div class="wrap">
+        <div class="stat"><b>3</b><span>Career programmes</span></div>
+        <div class="stat"><b>48h</b><span>Admission decision</span></div>
+        <div class="stat"><b>100%</b><span>Practical instruction</span></div>
+        <div class="stat"><b>QR</b><span>Verifiable certificates</span></div>
+      </div>
+    </div>
+
+    <section id="programmes">
+      <div class="wrap">
+        <div class="section-head">
+          <p class="eyebrow">Academic programmes</p>
+          <h2>Three focused schools. One standard of rigour.</h2>
+          <p class="lede">Each programme is delivered by practising professionals and assessed through laboratory work, projects and a final internship placement.</p>
+        </div>
+        <div class="programs" id="programGrid"><!-- rendered by JS --></div>
+      </div>
+    </section>
+
+    <section id="admissions" style="background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+      <div class="wrap">
+        <div class="section-head">
+          <p class="eyebrow">How admission works</p>
+          <h2>From application to student identity card in four steps.</h2>
+        </div>
+        <div class="steps">
+          <div class="step"><div class="num">01</div><h4>Create an account</h4><p>Register with your name, email address and phone number to open your applicant portal.</p></div>
+          <div class="step"><div class="num">02</div><h4>Choose &amp; apply</h4><p>Select your programme, complete the application form and upload your passport photograph.</p></div>
+          <div class="step"><div class="num">03</div><h4>Board review</h4><p>The Admissions Board verifies your documents and approves or declines your application.</p></div>
+          <div class="step"><div class="num">04</div><h4>Letter &amp; ID card</h4><p>Once admitted, download your admission letter with QR verification and print your student ID.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="about">
+      <div class="wrap split">
+        <div>
+          <p class="eyebrow">Why Freshemia</p>
+          <h2>A serious institution, not a training centre.</h2>
+          <p class="lede">Freshemia Academy operates a formal admissions process, documented academic records and verifiable student credentials — the same discipline you would expect from any established college.</p>
+          <ul class="checks" style="margin-top:22px">
+            <li>Documented admissions policy with an independent review board.</li>
+            <li>Every admission letter carries a unique admission number and QR code for third-party verification.</li>
+            <li>Student identity cards issued from the portal, ready for campus access.</li>
+            <li>Records retained securely; passport data handled under our privacy policy.</li>
+          </ul>
+        </div>
+        <div>
+          <div class="panel-quote">
+            <blockquote>“We admit students the way industry hires: verifying credentials, assessing readiness, and issuing records that can be trusted by employers.”</blockquote>
+            <cite>— Office of the Registrar, Freshemia Academy</cite>
+          </div>
+          <div class="card" style="margin-top:18px;padding:24px 26px">
+            <p class="eyebrow" style="margin-bottom:6px">Entry requirements</p>
+            <p style="margin:0 0 10px;font-size:.92rem;color:var(--muted)">Minimum of five O'level credits including English Language and Mathematics for diploma programmes; three credits for the professional certificate. Mature applicants may be assessed on experience.</p>
+            <a href="#/signup" class="btn btn-outline btn-sm">Review the requirements &amp; apply</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta-band tight">
+      <div class="wrap">
+        <div>
+          <h2>Ready to begin your application?</h2>
+          <p>Create your applicant account and submit your details today. You will receive an application reference immediately.</p>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <a href="#/signup" class="btn btn-gold">Apply for admission</a>
+          <a href="#/signin" class="btn btn-light" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.35)">Sign in to continue</a>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ============================== APPLICANT AUTH ============================== -->
+  <div class="view hidden" id="view-auth">
+    <div class="auth-shell">
+      <aside class="auth-aside">
+        <p class="eyebrow" style="color:#e6cf90">Applicant portal</p>
+        <h2 id="authAsideTitle">Your application, tracked end to end.</h2>
+        <p id="authAsideText">Create one account, complete one application, and follow its progress from submission to admission letter.</p>
+        <ul class="checks" style="margin-top:26px">
+          <li>Submit your application once and receive a reference number instantly.</li>
+          <li>Upload your passport photograph from any device.</li>
+          <li>See the Board's decision and any feedback in your portal.</li>
+          <li>Print your admission letter and student identity card.</li>
+        </ul>
+      </aside>
+      <div class="auth-main">
+        <div class="auth-card">
+          <div id="loginPane">
+            <h2>Sign in</h2>
+            <p class="sub">Access your Freshemia applicant portal.</p>
+            <div class="alert alert-error hidden" id="loginError"></div>
+            <div id="loginForm">
+              <div class="field">
+                <label for="loginEmail">Email address</label>
+                <input class="input" id="loginEmail" type="email" autocomplete="email" placeholder="you@example.com" required>
+              </div>
+              <div class="field">
+                <label for="loginPassword">Password</label>
+                <input class="input" id="loginPassword" type="password" autocomplete="current-password" placeholder="Your password" required>
+              </div>
+              <button class="btn btn-block" type="button" id="loginBtn">Sign in</button>
+            </div>
+            <div class="auth-switch">
+              New applicant? <button class="link-btn" id="toSignup">Create an account</button>
+            </div>
+            <div class="auth-switch" style="border-top:0;padding-top:6px;margin-top:6px">
+              Academy staff? <a href="#/staff" style="text-decoration:none;font-weight:600">Administrator sign in →</a>
+            </div>
+          </div>
+          <div id="signupPane" class="hidden">
+            <h2>Create your account</h2>
+            <p class="sub">Registration takes less than a minute.</p>
+            <div class="alert alert-error hidden" id="signupError"></div>
+            <div id="signupForm">
+              <div class="grid-2">
+                <div class="field"><label for="suFirst">First name <span class="req">*</span></label><input class="input" id="suFirst" placeholder="Amina" required></div>
+                <div class="field"><label for="suLast">Surname <span class="req">*</span></label><input class="input" id="suLast" placeholder="Yusuf" required></div>
+              </div>
+              <div class="field">
+                <label for="suEmail">Email address <span class="req">*</span></label>
+                <input class="input" id="suEmail" type="email" placeholder="you@example.com" required>
+                <div class="help">Your admission letter and decisions are sent to this address.</div>
+              </div>
+              <div class="field"><label for="suPhone">Phone number <span class="req">*</span></label><input class="input" id="suPhone" type="tel" placeholder="+234 800 000 0000" required></div>
+              <div class="field"><label for="suPassword">Password <span class="req">*</span></label><input class="input" id="suPassword" type="password" placeholder="At least 8 characters" required></div>
+              <button class="btn btn-block" type="button" id="signupBtn">Create account &amp; continue</button>
+            </div>
+            <div class="auth-switch">Already registered? <button class="link-btn" id="toSignin">Sign in instead</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================== STAFF SIGN IN ============================== -->
+  <div class="view hidden" id="view-staff">
+    <div class="auth-shell">
+      <aside class="auth-aside">
+        <p class="eyebrow" style="color:#e6cf90">Freshemia Academy</p>
+        <h2>Admissions<br>Management Console</h2>
+        <p>Restricted area. Authorised officers of the Academy review applications, verify credentials and issue admission numbers.</p>
+        <ul class="checks" style="margin-top:24px">
+          <li>Review submitted applications and uploaded documents.</li>
+          <li>Approve or decline with a reason recorded on the file.</li>
+          <li>Admission numbers and verification QR codes are issued automatically on approval.</li>
+        </ul>
+        <p style="margin-top:26px;font-size:.8rem;opacity:.6">All actions are attributed to the signed-in officer.</p>
+      </aside>
+      <div class="auth-main">
+        <div class="auth-card">
+          <h2>Administrator sign in</h2>
+          <p class="sub">Use your staff credentials to open the console.</p>
+          <div class="alert alert-error hidden" id="adminLoginError"></div>
+          <div id="adminLoginForm">
+            <div class="field">
+              <label for="admEmail">Staff email</label>
+              <input class="input" id="admEmail" type="email" placeholder="admin@freshemiaacademy.edu.ng" autocomplete="username" required>
+            </div>
+            <div class="field">
+              <label for="admPassword">Password</label>
+              <input class="input" id="admPassword" type="password" placeholder="••••••••" autocomplete="current-password" required>
+            </div>
+            <button class="btn btn-block" type="button" id="admLoginBtn">Sign in to console</button>
+          </div>
+          <div class="auth-switch">Applicant? <a href="#/signin" style="text-decoration:none;font-weight:600">Sign in to the student portal →</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================== APPLY WIZARD ============================== -->
+  <div class="view hidden" id="view-apply">
+    <div class="app-shell">
+      <div class="wrap" style="max-width:920px">
+        <div class="stepper" id="stepper">
+          <div class="s active" data-step="1"><span class="dot">1</span><span class="lbl">Programme</span><span class="bar"></span></div>
+          <div class="s" data-step="2"><span class="dot">2</span><span class="lbl">Personal details</span><span class="bar"></span></div>
+          <div class="s" data-step="3"><span class="dot">3</span><span class="lbl">Documents</span><span class="bar"></span></div>
+          <div class="s" data-step="4"><span class="dot">4</span><span class="lbl">Submitted</span></div>
+        </div>
+
+        <div class="card" id="step1">
+          <div class="card-head">
+            <h2>Choose your programme</h2>
+            <p>Select the programme you are applying for. You may only submit one application per session.</p>
+          </div>
+          <div class="card-pad">
+            <div class="choose-grid" id="chooseGrid"></div>
+            <div class="alert alert-info" style="margin-top:20px">
+              Intake: <b>2026 / 2027 academic session</b>. Classes commence in January. Admission is offered on a rolling basis until places are filled.
+            </div>
+          </div>
+          <div class="card-foot">
+            <a href="#/dashboard" class="btn btn-ghost">Cancel</a>
+            <button class="btn" id="toStep2" disabled>Continue to personal details</button>
+          </div>
+        </div>
+
+        <div class="card hidden" id="step2">
+          <div class="card-head">
+            <h2>Personal details</h2>
+            <p>Enter your names exactly as they appear on your credentials. These will be printed on your admission letter and ID card.</p>
+          </div>
+          <div class="card-pad">
+            <div class="alert alert-error hidden" id="step2Error"></div>
+            <fieldset id="detailsForm" style="border:0;padding:0;margin:0">
+              <div class="grid-3">
+                <div class="field"><label>Surname <span class="req">*</span></label><input class="input" id="fSurname" required></div>
+                <div class="field"><label>First name <span class="req">*</span></label><input class="input" id="fFirst" required></div>
+                <div class="field"><label>Middle name</label><input class="input" id="fMiddle"></div>
+              </div>
+              <div class="grid-2">
+                <div class="field"><label>Gender <span class="req">*</span></label>
+                  <select class="input" id="fGender" required><option value="">Select…</option><option>Female</option><option>Male</option><option>Prefer not to say</option></select>
+                </div>
+                <div class="field"><label>Date of birth <span class="req">*</span></label><input class="input" id="fDob" type="date" required></div>
+              </div>
+              <div class="grid-2">
+                <div class="field"><label>Email address <span class="req">*</span></label><input class="input" id="fEmail" type="email" required></div>
+                <div class="field"><label>Phone number <span class="req">*</span></label><input class="input" id="fPhone" type="tel" required></div>
+              </div>
+              <div class="grid-2">
+                <div class="field"><label>State of residence <span class="req">*</span></label><select class="input" id="fState" required></select></div>
+                <div class="field"><label>Nationality</label><input class="input" id="fNationality" value="Nigerian"></div>
+              </div>
+              <div class="field"><label>Residential address <span class="req">*</span></label><textarea class="input" id="fAddress" placeholder="House number, street, city" required></textarea></div>
+              <div class="field"><label>Highest qualification <span class="req">*</span></label>
+                <select class="input" id="fQualification" required>
+                  <option value="">Select…</option>
+                  <option>O'level (WAEC / NECO) — 5 credits and above</option>
+                  <option>O'level (WAEC / NECO) — below 5 credits</option>
+                  <option>ND / NCE / Diploma</option>
+                  <option>HND / Degree</option>
+                  <option>SSCE in view</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div class="grid-2">
+                <div class="field"><label>Parent / guardian name</label><input class="input" id="fGuardian"></div>
+                <div class="field"><label>Parent / guardian phone</label><input class="input" id="fGuardianPhone" type="tel"></div>
+              </div>
+            </fieldset>
+          </div>
+          <div class="card-foot">
+            <button class="btn btn-ghost" data-back="1">← Back</button>
+            <button class="btn" id="toStep3">Continue to documents</button>
+          </div>
+        </div>
+
+        <div class="card hidden" id="step3">
+          <div class="card-head">
+            <h2>Documents &amp; submission</h2>
+            <p>Upload a clear passport photograph. Additional documents strengthen your application.</p>
+          </div>
+          <div class="card-pad">
+            <div class="alert alert-error hidden" id="step3Error"></div>
+            <div class="field">
+              <label>Passport photograph <span class="req">*</span></label>
+              <label class="uploader" id="photoUploader">
+                <span class="thumb" id="photoThumb">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M5.5 19c1.2-2.6 3.6-4 6.5-4s5.3 1.4 6.5 4"/></svg>
+                </span>
+                <span>
+                  <strong>Passport photograph</strong>
+                  <span class="small">JPG or PNG, plain background, taken recently. Max 5MB.</span>
+                  <span class="status" id="photoStatus"></span>
+                </span>
+                <input type="file" id="photoInput" accept="image/*" hidden>
+              </label>
+            </div>
+            <div class="grid-2">
+              <div class="field">
+                <label>O'level / result document <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+                <label class="uploader" id="resultUploader">
+                  <span class="thumb" id="resultThumb">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>
+                  </span>
+                  <span><strong>Result / certificate</strong><span class="small">Photo or scan of your result.</span><span class="status" id="resultStatus"></span></span>
+                  <input type="file" id="resultInput" accept="image/*" hidden>
+                </label>
+              </div>
+              <div class="field">
+                <label>Means of identification <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+                <label class="uploader" id="idUploader">
+                  <span class="thumb" id="idThumb">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="11" r="2"/><path d="M13 10h6M13 14h5M4.5 16c.8-1.3 2-2 3.5-2s2.7.7 3.5 2"/></svg>
+                  </span>
+                  <span><strong>NIN slip / ID card</strong><span class="small">Optional identity document.</span><span class="status" id="idStatus"></span></span>
+                  <input type="file" id="idInput" accept="image/*" hidden>
+                </label>
+              </div>
+            </div>
+            <label style="display:flex;gap:11px;align-items:flex-start;margin-top:22px;font-size:.87rem;color:#3c4855;cursor:pointer">
+              <input type="checkbox" id="declaration" style="margin-top:3px;width:16px;height:16px">
+              <span>I declare that the information and documents provided are true and complete. I understand that false information may lead to the withdrawal of any offer of admission.</span>
+            </label>
+          </div>
+          <div class="card-foot">
+            <button class="btn btn-ghost" data-back="2">← Back</button>
+            <button class="btn btn-gold" id="submitApplication">Submit application</button>
+          </div>
+        </div>
+
+        <div class="card hidden" id="step4">
+          <div class="card-pad" style="text-align:center;padding:52px 34px">
+            <div style="width:66px;height:66px;border-radius:50%;background:var(--amber-bg);color:var(--amber);display:grid;place-items:center;margin:0 auto 20px;font-size:1.9rem">✓</div>
+            <h2>Application submitted</h2>
+            <p class="lede" style="margin:0 auto 6px">Your application <b id="doneRef" class="mono">—</b> is under review.</p>
+            <p class="lede" style="margin:0 auto 26px;font-size:.94rem">The Admissions Board will review your documents and communicate its decision through your portal. This usually takes up to 48 working hours.</p>
+            <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+              <a href="#/dashboard" class="btn">Go to my portal</a>
+              <a href="#/" class="btn btn-outline">Back to home</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================== APPLICANT DASHBOARD ============================== -->
+  <div class="view hidden" id="view-dashboard">
+    <div class="app-shell">
+      <div class="wrap" style="max-width:1000px">
+        <div class="portal-bar no-print">
+          <span id="portalWho">Signed in</span>
+          <div style="display:flex;gap:8px">
+            <a href="#/" class="btn btn-ghost btn-sm">Academy website</a>
+            <button class="btn btn-outline btn-sm" id="studentSignout">Sign out</button>
+          </div>
+        </div>
+        <div id="dashboardBody"><p style="color:var(--muted)">Loading your portal…</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================== ADMISSION LETTER ============================== -->
+  <div class="view hidden" id="view-letter">
+    <div class="app-shell">
+      <div class="wrap">
+        <div class="paper-toolbar no-print">
+          <div>
+            <a href="#/dashboard" class="btn btn-ghost btn-sm">← Back to portal</a>
+            <span class="hint">Your letter is A4-ready — use “Print” and choose “Save as PDF”.</span>
+          </div>
+          <button class="btn btn-sm" onclick="window.print()">Print / Save as PDF</button>
+        </div>
+        <div class="paper-stage" id="letterStage"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================== ID CARD ============================== -->
+  <div class="view hidden" id="view-id">
+    <div class="app-shell">
+      <div class="wrap" style="max-width:1000px">
+        <div class="paper-toolbar no-print">
+          <div>
+            <a href="#/dashboard" class="btn btn-ghost btn-sm">← Back to portal</a>
+            <span class="hint">Print on card or paper at 100% scale, then laminate.</span>
+          </div>
+          <button class="btn btn-sm" onclick="window.print()">Print ID card</button>
+        </div>
+        <div class="id-stage" id="idStage"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================== VERIFY ============================== -->
+  <div class="view hidden" id="view-verify">
+    <div class="wrap">
+      <div class="verify-card">
+        <h2>Verify an admission letter</h2>
+        <p style="color:var(--muted);font-size:.9rem">Enter the admission number printed on the letter, or scan the QR code on the document.</p>
+        <div id="verifyForm" style="display:flex;gap:10px;margin-top:18px">
+          <input class="input" id="verifyInput" placeholder="FA/26/CYB/0001" style="text-align:center">
+          <button class="btn" type="button" id="verifyBtn">Verify</button>
+        </div>
+        <div id="verifyResult" style="margin-top:24px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================== ADMIN CONSOLE ============================== -->
+  <div class="view hidden" id="view-admin">
+    <header class="admin-header no-print">
+      <div class="wrap">
+        <a href="#/" class="brand">
+          <svg viewBox="0 0 64 64" aria-hidden="true" style="width:38px;height:38px">
+            <path d="M32 3 58 11v20c0 15-11 26-26 30C17 57 6 46 6 31V11z" fill="#16406f"/>
+            <path d="M21 25.5h22M21 30.5h22M21 35.5h14" stroke="#d9c68c" stroke-width="2.4" stroke-linecap="round"/>
+          </svg>
+          <span>
+            <span class="brand-name" style="font-size:1.05rem">Freshemia Academy</span>
+            <span class="brand-sub">Admissions console</span>
+          </span>
+        </a>
+        <div class="who">
+          <span id="whoName">—</span>
+          <a href="#/" class="btn btn-sm" style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25);color:#fff">Student site</a>
+          <button class="theme-toggle" type="button" aria-label="Switch between light and dark mode" title="Light / dark mode">
+            <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6"/></svg>
+            <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+          </button>
+          <button class="btn btn-sm" style="background:#fff;border-color:#fff;color:var(--navy)" id="adminLogout">Sign out</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="admin-wrap">
+      <aside class="admin-side">
+        <div class="side-label">Review</div>
+        <button class="side-link active" data-view="overview">Overview</button>
+        <button class="side-link" data-view="applications">Applications <span class="count" id="cntAll">0</span></button>
+        <button class="side-link" data-view="pending">Pending review <span class="count" id="cntPending">0</span></button>
+        <div class="side-label">Register</div>
+        <button class="side-link" data-view="admitted">Admitted students <span class="count" id="cntAdmitted">0</span></button>
+        <button class="side-link" data-view="declined">Declined <span class="count" id="cntDeclined">0</span></button>
+        <button class="side-link" data-view="students">Registered accounts</button>
+        <div class="side-label">Catalogue</div>
+        <button class="side-link" data-view="programmes">Programmes &amp; fees</button>
+      </aside>
+
+      <main class="admin-main">
+        <div class="admin-title">
+          <div>
+            <h1 id="pageTitle">Admissions overview</h1>
+            <p id="pageSub">Live summary of the 2026 / 2027 application cycle.</p>
+          </div>
+          <button class="btn btn-sm btn-outline" id="refreshBtn">Refresh</button>
+        </div>
+
+        <section id="paneOverview">
+          <div class="kpi-grid">
+            <div class="kpi"><span>Applications</span><b id="kTotal">0</b></div>
+            <div class="kpi pending"><span>Awaiting review</span><b id="kPending">0</b></div>
+            <div class="kpi approved"><span>Admitted</span><b id="kApproved">0</b></div>
+            <div class="kpi rejected"><span>Declined</span><b id="kRejected">0</b></div>
+            <div class="kpi kpi-accounts"><span>Portal accounts</span><b id="kAccounts">0</b></div>
+            <div class="kpi kpi-catalogue"><span>Programmes</span><b id="kProgrammes">0</b></div>
+          </div>
+          <div class="card" style="margin-bottom:22px">
+            <div class="card-head"><h3>Applications by programme</h3><p>Live distribution across the programmes on the catalogue.</p></div>
+            <div class="card-pad" id="programBreakdown"></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>Latest submissions</h3><p>Most recent applications received through the portal.</p></div>
+            <div class="table-scroll"><table class="grid"><thead><tr><th>Applicant</th><th>Reference</th><th>Programme</th><th>Submitted</th><th>Status</th><th></th></tr></thead><tbody id="recentBody"></tbody></table></div>
+          </div>
+        </section>
+
+        <section id="paneApplications" class="hidden">
+          <div class="toolbar">
+            <input class="input" id="searchInput" placeholder="Search name, email, reference…">
+            <select class="input" id="filterProgram"><option value="all">All programmes</option></select>
+            <select class="input" id="filterStatus">
+              <option value="all">All statuses</option>
+              <option value="pending">Pending review</option>
+              <option value="approved">Admitted</option>
+              <option value="rejected">Declined</option>
+            </select>
+            <span style="font-size:.82rem;color:var(--muted)" id="listCount"></span>
+          </div>
+          <div class="table-card">
+            <div class="table-scroll">
+              <table class="grid">
+                <thead><tr><th>Applicant</th><th>Reference</th><th>Programme</th><th>Admission no.</th><th>Submitted</th><th>Status</th><th></th></tr></thead>
+                <tbody id="applicationsBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="paneProgrammes" class="hidden">
+          <div class="toolbar">
+            <p class="toolbar-note">Set tuition, add new courses or retire old ones. Changes appear on the public website immediately.</p>
+            <button class="btn btn-sm btn-gold" id="addProgrammeBtn" style="margin-left:auto">+ Add programme</button>
+          </div>
+          <div class="table-card">
+            <div class="table-scroll">
+              <table class="grid">
+                <thead><tr><th>Programme</th><th>Code</th><th>Duration</th><th>Tuition</th><th>Applications</th><th></th></tr></thead>
+                <tbody id="programmesBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="notice" style="margin-top:16px">
+            A programme code is embedded in every admission number (for example <b class="mono">FA/26/CYB/0001</b>), and retiring a programme never deletes the applications already received for it.
+          </div>
+        </section>
+
+        <section id="paneStudents" class="hidden">
+          <div class="table-card">
+            <div class="table-scroll">
+              <table class="grid">
+                <thead><tr><th>Account holder</th><th>Contact</th><th>Programme</th><th>Application</th><th>Status</th><th>Registered</th><th></th></tr></thead>
+                <tbody id="studentsBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+</main>
+
+<footer class="site-footer no-print">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <a href="#/" class="brand" style="margin-bottom:14px">
+          <svg viewBox="0 0 64 64" aria-hidden="true" style="width:38px;height:38px">
+            <path d="M32 3 58 11v20c0 15-11 26-26 30C17 57 6 46 6 31V11z" fill="#16406f"/>
+            <path d="M21 25.5h22M21 30.5h22M21 35.5h14" stroke="#d9c68c" stroke-width="2.4" stroke-linecap="round"/>
+          </svg>
+          <span><span class="brand-name">Freshemia Academy</span><span class="brand-sub">Jos · Plateau State</span></span>
+        </a>
+        <p style="max-width:34ch">A professional academy for cybersecurity, artificial intelligence and digital operations.</p>
+      </div>
+      <div>
+        <h4>Academy</h4>
+        <a href="#/#programmes">Programmes</a>
+        <a href="#/#admissions">Admissions</a>
+        <a href="#/#about">About us</a>
+        <a href="#/verify">Verify a letter</a>
+      </div>
+      <div>
+        <h4>Applicants</h4>
+        <a href="#/signup">Create account</a>
+        <a href="#/signin">Sign in</a>
+        <a href="#/dashboard">Application status</a>
+        <a href="#/staff">Administrator console</a>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <p style="margin:0 0 9px">Admissions Office<br>Jos, Plateau State, Nigeria</p>
+        <a href="mailto:admissions@freshemiaacademy.edu.ng">admissions@freshemiaacademy.edu.ng</a>
+        <a href="tel:+2348030001122">+234 803 000 1122</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© <span id="year"></span> Freshemia Academy. All rights reserved.</span>
+      <span>Admissions portal · 2026 / 2027 session</span>
+    </div>
+  </div>
+</footer>
+
+<div class="toast-stack" id="toasts"></div>
+<!-- Everything below is inlined by build.js so this page works as one self-contained file -->
+<!-- @@APP_SCRIPTS@@ -->
+</body>
+</html>
