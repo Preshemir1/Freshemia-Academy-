@@ -1,0 +1,22 @@
+# dependencies
+node_modules/
+
+# the live database — never commit real applicants
+data/*
+!data/.gitkeep
+
+# local settings and secrets
+.env
+.env.local
+.env.*.local
+
+# host/runtime noise
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+coverage/
+*.tmp
+*.bak
