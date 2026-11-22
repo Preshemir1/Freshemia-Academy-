@@ -7,6 +7,9 @@
     admin: { token: 'fa_admin_token', user: 'fa_admin_user' },
   };
 
+  /* Where the page remembers a portal server chosen in the browser. */
+  const API_KEY = 'fa_api_base';
+
   /* Some browsers block localStorage for file:// pages — degrade to memory. */
   const mem = {};
   const store = {
@@ -67,15 +70,109 @@
     },
     set(role, token, user) {
       const k = KEYS[role];
+      if (!k) return;
       store.set(k.token, token);
       store.set(k.user, JSON.stringify(user));
     },
     clear(role) {
       const k = KEYS[role];
+      if (!k) return;
       store.remove(k.token);
       store.remove(k.user);
     },
   };
+
+  /* ------------------------------------------------------------------ */
+  /* Which server does this copy of the page talk to?                    */
+  /* ------------------------------------------------------------------ */
+  /* Resolution order, most specific first:                              */
+  /*   1. ?api=https://…        (also remembered, so a shared link sticks) */
+  /*   2. a server saved in this browser via "Connect to server…"        */
+  /*   3. window.FA_API_BASE    (baked in at build time by build.js)     */
+  /*   4. the origin that served the page (same-origin hosting)          */
+  /* Anything that ends up empty means "same origin".                    */
+
+  /** Turn "freshemia.onrender.com/" or "https://x/api" into "https://x". */
+  function normalizeBase(value) {
+    let base = String(value == null ? '' : value).trim();
+    if (!base) return '';
+    if (!/^https?:\/\//i.test(base)) {
+      const local = /^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])(:|$)/i.test(base);
+      base = (local ? 'http://' : 'https://') + base;
+    }
+    base = base.replace(/\/+$/, '');
+    base = base.replace(/\/api$/i, '');
+    return base;
+  }
+
+  function queryBase() {
+    try {
+      return normalizeBase(new URLSearchParams(location.search).get('api') || '');
+    } catch {
+      return '';
+    }
+  }
+
+  function savedBase() {
+    try {
+      return normalizeBase(store.get(API_KEY) || '');
+    } catch {
+      return '';
+    }
+  }
+
+  const bakedBase = normalizeBase(window.FA_API_BASE || '');
+  const fromQuery = queryBase();
+  // A link with ?api= wins once and is remembered.
+  if (fromQuery) store.set(API_KEY, fromQuery);
+  const API_BASE = fromQuery || savedBase() || bakedBase || '';
+
+  const apiOrigin = () => API_BASE || location.origin;
+
+  function setApiBase(value) {
+    const base = normalizeBase(value);
+    if (base) store.set(API_KEY, base);
+    else store.remove(API_KEY);
+    return base;
+  }
+
+  function resetApiBase() {
+    store.remove(API_KEY);
+  }
+
+  /** Ask a candidate server who it is. Throws a human-readable error if it is not a portal. */
+  async function probe(value) {
+    const base = normalizeBase(value);
+    if (!base && location.protocol === 'file:') {
+      throw new Error('Enter the address of your portal server, for example https://freshemia-academy.onrender.com');
+    }
+    const target = base || location.origin;
+    let res;
+    try {
+      res = await fetch(target + '/api/health', { headers: { Accept: 'application/json' } });
+    } catch {
+      throw new Error(
+        'Could not reach ' + target + '. Check the address, that the server is running, and that its ALLOWED_ORIGINS includes this site. ' +
+          'A page served over HTTPS can only reach an HTTPS server.'
+      );
+    }
+    if (!res.ok) throw new Error(target + ' answered with HTTP ' + res.status + '.');
+    let data = null;
+    try {
+      data = await res.json();
+    } catch {
+      throw new Error(target + ' did not answer with JSON — that is not a Freshemia portal server.');
+    }
+    if (!data || data.ok !== true) throw new Error(target + ' is not a Freshemia portal server.');
+    return { ...data, base: target };
+  }
+
+  /** Probe, then remember the server and let the caller reload. */
+  async function connect(value) {
+    const info = await probe(value);
+    setApiBase(info.base);
+    return info;
+  }
 
   let offline = false;
 
@@ -113,14 +210,14 @@
     const session = Auth.get(role);
     if (session) opts.headers.Authorization = 'Bearer ' + session.token;
 
-    // Opened straight from disk: no server to talk to.
-    if (location.protocol === 'file:') return useDemo(path, opts, role);
+    // Same origin by default; a remote portal server when one is configured.
+    const url = apiOrigin() + '/api' + path;
 
     let res;
     try {
-      res = await fetch('/api' + path, opts);
+      res = await fetch(url, opts);
     } catch {
-      // file:// or no server at all
+      // file://, a static host with no API, or an unreachable remote server.
       return useDemo(path, opts, role);
     }
     // A static host without the API returns HTML here — fall back to the demo engine.
@@ -221,6 +318,23 @@
     'no application': 'No application',
   };
 
-  const FA = { Auth, api, toast, esc, fmtDate, readImage, STATUS_LABEL, offline: false };
+  const FA = {
+    Auth,
+    api,
+    toast,
+    esc,
+    fmtDate,
+    readImage,
+    STATUS_LABEL,
+    offline: false,
+    /* server wiring */
+    apiBase: API_BASE,
+    bakedBase,
+    normalizeBase,
+    probe,
+    connect,
+    setApiBase,
+    resetApiBase,
+  };
   window.FA = FA;
 })();

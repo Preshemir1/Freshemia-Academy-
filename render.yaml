@@ -22,6 +22,11 @@ services:
         value: admin@freshemiaacademy.edu.ng
       - key: ADMIN_PASSWORD
         sync: false # asked for when the blueprint is applied
+      # Which sites may call this API from another origin. "*" allows any —
+      # fine for a demo. For production put your published site here, e.g.
+      # "https://preshemir1.github.io".
+      - key: ALLOWED_ORIGINS
+        value: "*"
     disk:
       name: data
       mountPath: /opt/render/project/src/data

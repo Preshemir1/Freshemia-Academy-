@@ -42,6 +42,7 @@ You (or I) edit in this workspace
 | Repository | `Preshemir1/Freshemia-Academy-` — the full project is committed here |
 | Build | `node build.js` produces `public/index.html` (262 kB, three programmes) |
 | Server | `node server.js` — full API, verified by `npm run smoke` (29 checks) |
+| Site ↔ server link | **done** — `API_BASE`, CORS and a *Connect to server…* control (§5 B5) |
 | GitHub Pages | **needs switching on once**: Settings → Pages → Source = GitHub Actions |
 | Live Node host | **not yet deployed** — follow §5 Option B when you are ready |
 | Administrator password | still the default until you set `ADMIN_PASSWORD` on the host |
@@ -291,6 +292,48 @@ school a real domain here (`admissions.freshemiaacademy.edu.ng`).
 In every case the same three settings apply: **`ADMIN_PASSWORD`**, **`SEED_DEMO=0`**, and a
 **persistent disk mounted at the project's `data/` folder**.
 
+#### B5. Link the published website to your live server
+
+The website and the API do not have to live together. A page on GitHub Pages (or a file on a USB
+stick) can read and write the database of the Render/Railway service. Three ways, strongest first:
+
+**1. Bake the address into the page at build time.** Copy the service URL from the host (e.g.
+`https://freshemia-academy.onrender.com`) and either
+
+```bash
+API_BASE=https://freshemia-academy.onrender.com node build.js   # commit the rebuilt page
+```
+
+or, better, keep it out of the code: GitHub → **Settings → Secrets and variables → Actions →
+Variables → New repository variable**, name **`API_BASE`**, value the service URL. The Pages
+workflow reads it on every push, so the published site always points at the live portal. The
+committed `public/index.html` stays unbaked — CI enforces that.
+
+**2. One-off from a link.** Open any copy of the page with the address attached:
+
+```
+https://preshemir1.github.io/Freshemia-Academy-/?api=https://freshemia-academy.onrender.com
+```
+
+The page checks the server, remembers it in that browser and keeps using it.
+
+**3. From the page itself.** With no server reachable, the yellow banner shows a
+**Connect to server…** button. Paste the address, press **Test & connect**; the page probes
+`/api/health`, reports `3 programmes · 6 applications`, saves the address and reloads onto the live
+database. **Use the default** forgets the choice again.
+
+Because the page then calls the API from another origin, the server must allow that origin:
+
+| Setting | Effect |
+|---------|--------|
+| `ALLOWED_ORIGINS` unset | Any site may call the API. Safe here — tokens travel in the `Authorization` header, never in cookies |
+| `ALLOWED_ORIGINS=https://preshemir1.github.io` | Only the listed origins (comma-separated; `https://*.onrender.com` works) |
+| Not listed | No CORS header is sent, and a preflight is refused with `403 Origin … is not allowed` |
+
+`render.yaml` ships `ALLOWED_ORIGINS="*"` so any demo copy works; narrow it to your own site before
+launch. One more rule: a page served over **HTTPS** can only reach an **HTTPS** server — a
+`http://…:3000` address will be blocked by the browser.
+
 ---
 
 ## 6. Connect your own domain
@@ -351,6 +394,8 @@ Two rules that keep this clean:
 - [ ] `SEED_DEMO=0` — the six demo applications are gone
 - [ ] `data/` is **not** in the repository (check GitHub's file list)
 - [ ] HTTPS enforced (hosts do this automatically; on a VPS use certbot)
+- [ ] `ALLOWED_ORIGINS` narrowed to the sites that actually use the portal (not `*`)
+- [ ] Repository variable `API_BASE` points at the live service, so the published page links itself
 - [ ] Repository is **private**
 - [ ] Demo student passwords (`Student@2026`) no longer exist because the demo records are gone
 - [ ] A backup of `data/db.json` has been taken once real applications arrive
@@ -364,7 +409,10 @@ Two rules that keep this clean:
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| Yellow *"Offline preview"* banner | The page cannot reach `/api` — opened from disk, or Pages hosting | Expected for Option A. For shared data use Option B (Node host) |
+| Yellow *"Offline preview"* banner | The page cannot reach `/api` — opened from disk, or Pages hosting with no server linked | Use **Connect to server…** in the banner, or set `API_BASE` (§5 B5) |
+| Banner says the server could not be reached | Wrong address, server asleep (Render free tier), or the origin is not allowed | Open the address in a browser; check `/api/health`; add the site to `ALLOWED_ORIGINS` |
+| `403 Origin … is not allowed` in the console | `ALLOWED_ORIGINS` is set and the calling site is not in it | Add that origin (comma-separated), or unset it to allow any site |
+| Page on HTTPS cannot reach `http://…:3000` | Browsers block mixed content | Give the server an HTTPS URL (hosts do this; on a VPS use certbot) |
 | `Cannot find module 'express'` | Dependencies not installed | `npm ci` (or `npm install`) in the project folder |
 | `public/index.html is missing` | The page was never built | `node build.js` (or `npm start`, which builds first) |
 | Everything works, then all accounts vanish after a deploy | No persistent disk, or disk mounted somewhere other than `data/` | Attach a disk, mount it at the project's `data/` folder, set `DATA_DIR` if it lives elsewhere |
@@ -399,7 +447,10 @@ npm install             # once
 npm start               # build + serve on http://localhost:3000
 npm run build           # rebuild the single file only
 npm run reset           # move the database aside, then restart to re-seed
-npm run smoke           # end-to-end API test (29 checks, throwaway database)
+npm run smoke           # end-to-end API + CORS test (38 checks, throwaway database)
+
+# link a published copy of the page to a live portal
+API_BASE=https://freshemia-academy.onrender.com node build.js
 
 # publish
 git add . && git commit -m "message" && git push

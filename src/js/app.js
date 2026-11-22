@@ -1669,6 +1669,99 @@
   );
 
   /* ================================================================== */
+  /* Connect to a portal server                                         */
+  /* ================================================================== */
+  /* Any copy of this page — a file on a USB stick, GitHub Pages — can be
+     pointed at a live portal. The address is checked against /api/health,
+     remembered in this browser, and the page reloads onto the shared
+     database. `?api=https://host` does the same from a link. */
+
+  const serverDialog = $('#serverDialog');
+
+  function serverLabel(base) {
+    return base || (location.protocol === 'file:' ? 'this file (offline)' : location.origin);
+  }
+
+  function openServerDialog() {
+    if (!serverDialog) return;
+    const input = $('#serverUrl');
+    const status = $('#serverStatus');
+    const current = $('#serverCurrent');
+    if (input) input.value = window.FA.apiBase || '';
+    if (status) {
+      status.textContent = '';
+      status.className = 'server-dialog-status';
+    }
+    if (current) {
+      const source = window.FA.apiBase
+        ? window.FA.apiBase === window.FA.bakedBase
+          ? 'built into this page'
+          : 'chosen in this browser'
+        : 'the default for this page';
+      current.textContent = 'Currently using ' + serverLabel(window.FA.apiBase) + ' — ' + source + '.';
+    }
+    serverDialog.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => input && input.focus(), 30);
+  }
+
+  function closeServerDialog() {
+    if (!serverDialog) return;
+    serverDialog.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  $('#connectServer')?.addEventListener('click', openServerDialog);
+  $('#serverCancel')?.addEventListener('click', closeServerDialog);
+  serverDialog?.addEventListener('click', (e) => {
+    if (e.target === serverDialog) closeServerDialog();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && serverDialog && !serverDialog.classList.contains('hidden')) closeServerDialog();
+  });
+
+  $('#serverDefault')?.addEventListener('click', () => {
+    window.FA.resetApiBase();
+    toast('Using the default server for this page. Reloading…', 'ok');
+    setTimeout(() => location.reload(), 400);
+  });
+
+  $('#serverForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const status = $('#serverStatus');
+    const button = $('#serverConnect');
+    const value = $('#serverUrl').value;
+    const label = button ? button.textContent : '';
+    if (button) {
+      button.disabled = true;
+      button.textContent = 'Checking…';
+    }
+    if (status) {
+      status.textContent = 'Contacting ' + (value || 'the server') + '…';
+      status.className = 'server-dialog-status';
+    }
+    try {
+      const info = await window.FA.connect(value);
+      if (status) {
+        status.textContent = `Connected — ${info.programmes} programmes, ${info.applications} applications. Reloading…`;
+        status.className = 'server-dialog-status ok';
+      }
+      toast('Connected to the portal server.', 'ok');
+      setTimeout(() => location.reload(), 700);
+    } catch (err) {
+      if (status) {
+        status.textContent = err.message;
+        status.className = 'server-dialog-status err';
+      }
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.textContent = label;
+      }
+    }
+  });
+
+  /* ================================================================== */
   /* Boot                                                               */
   /* ================================================================== */
   $('#navToggle')?.addEventListener('click', () => $('#mainNav').classList.toggle('open'));
@@ -1682,7 +1775,14 @@
   /* Offline (single-file) mode notice */
   function showOfflineBanner() {
     const banner = $('#demoBanner');
-    if (banner) banner.classList.remove('hidden');
+    if (!banner) return;
+    const text = $('#demoBannerText');
+    if (text) {
+      text.innerHTML = window.FA.apiBase
+        ? `<b>Offline preview.</b> The portal server at <code>${esc(window.FA.apiBase)}</code> could not be reached — accounts and applications are saved in <b>this browser only</b>.`
+        : '<b>Offline preview.</b> No portal server detected — accounts and applications are saved in <b>this browser only</b>. Run <code>npm start</code> for the live multi-user portal.';
+    }
+    banner.classList.remove('hidden');
   }
   window.addEventListener('fa:offline', showOfflineBanner);
   $('#dismissDemo')?.addEventListener('click', () => $('#demoBanner')?.classList.add('hidden'));

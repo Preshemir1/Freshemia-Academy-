@@ -14,6 +14,13 @@
 
    Never edit public/index.html by hand — change src/ and run `node build.js`
    (or `npm run build`).
+
+   Point a published copy at a live portal server by baking its address in:
+
+       API_BASE=https://freshemia-academy.onrender.com node build.js
+
+   The committed public/index.html is normally built without API_BASE and picks
+   its server from the origin that serves it — or from "Connect to server…".
    ========================================================================== */
 'use strict';
 
@@ -40,7 +47,25 @@ function script(body, comment) {
   return `<script>\n/* ${comment} */\n${safe}\n</script>`;
 }
 
-function build() {
+/**
+ * The portal server this copy of the page should talk to, or '' for
+ * "whatever origin is serving me". Accepts `--api-base=…` or API_BASE.
+ */
+function apiBaseFromEnv(argv) {
+  const flag = argv.find((arg) => arg.startsWith('--api-base='));
+  const raw = String(flag ? flag.slice('--api-base='.length) : process.env.API_BASE || '').trim();
+  if (!raw) return '';
+  let base = raw;
+  if (!/^https?:\/\//i.test(base)) {
+    const local = /^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])(:|$)/i.test(base);
+    base = (local ? 'http://' : 'https://') + base;
+  }
+  base = base.replace(/\/+$/, '').replace(/\/api$/i, '');
+  return base;
+}
+
+function build(options = {}) {
+  const apiBase = options.apiBase !== undefined ? options.apiBase : apiBaseFromEnv([]);
   const template = read('src/index.template.html');
   const css = tidy(read('src/styles/app.css'));
   const programs = JSON.parse(read('shared/programs.json'));
@@ -51,6 +76,7 @@ function build() {
 
   if (!/\/\* @@APP_CSS@@ \*\//.test(template)) throw new Error('Template is missing the @@APP_CSS@@ marker.');
   if (!/<!-- @@APP_SCRIPTS@@ -->/.test(template)) throw new Error('Template is missing the @@APP_SCRIPTS@@ marker.');
+  if (!/<!-- @@API_BASE@@ -->/.test(template)) throw new Error('Template is missing the @@API_BASE@@ marker.');
   if (!Object.keys(programs).length) throw new Error('shared/programs.json is empty — the catalogue must have at least one programme.');
 
   const scripts = [
@@ -61,21 +87,28 @@ function build() {
     script(app, 'Freshemia Academy — single-page application — app.js'),
   ].join('\n\n');
 
+  const apiBaseScript = apiBase
+    ? `<script>\n/* Portal server, baked in at build time (build.js API_BASE). */\nwindow.FA_API_BASE = ${JSON.stringify(apiBase)};\n</script>`
+    : '<!-- No API_BASE baked in: this page talks to the origin that serves it, or to a server chosen with "Connect to server…". -->';
+
   const html = template
     .replace('/* @@APP_CSS@@ */', () => css)
+    .replace('<!-- @@API_BASE@@ -->', () => apiBaseScript)
     .replace('<!-- @@APP_SCRIPTS@@ -->', () => scripts);
 
   fs.mkdirSync(OUT_DIR, { recursive: true });
   fs.writeFileSync(OUT_FILE, html, 'utf8');
 
   const kb = (Buffer.byteLength(html, 'utf8') / 1024).toFixed(1);
-  console.log(`built public/index.html — ${kb} kB, ${Object.keys(programs).length} programmes`);
+  console.log(
+    `built public/index.html — ${kb} kB, ${Object.keys(programs).length} programmes, API base: ${apiBase || 'same origin'}`
+  );
   return html;
 }
 
 if (require.main === module) {
   try {
-    build();
+    build({ apiBase: apiBaseFromEnv(process.argv.slice(2)) });
   } catch (err) {
     console.error('build failed:', err.message);
     process.exit(1);
