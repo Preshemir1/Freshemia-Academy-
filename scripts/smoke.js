@@ -61,10 +61,10 @@ async function call(method, route, { token, body } = {}) {
   return { status: res.status, data };
 }
 
-async function waitForServer() {
+async function waitFor(url) {
   for (let attempt = 0; attempt < 60; attempt += 1) {
     try {
-      const res = await fetch(`${BASE}/api/health`);
+      const res = await fetch(`${url}/api/health`);
       if (res.ok) return true;
     } catch {
       /* not up yet */
@@ -74,18 +74,22 @@ async function waitForServer() {
   return false;
 }
 
-function startServer() {
+const waitForServer = () => waitFor(BASE);
+
+function startServer(env = {}, port = PORT) {
   const child = spawn(process.execPath, ['server.js'], {
     cwd: ROOT,
     env: {
       ...process.env,
-      PORT: String(PORT),
+      PORT: String(port),
       HOST: '127.0.0.1',
       DATA_DIR,
       ADMIN_PASSWORD,
       ADMIN_EMAIL: 'admin@freshemiaacademy.edu.ng',
       SEED_DEMO: '0',
       NODE_ENV: 'test',
+      ALLOWED_ORIGINS: '',
+      ...env,
     },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
@@ -215,6 +219,66 @@ async function run() {
 
     const blocked = await call('DELETE', '/admin/programs/cybersecurity', { token: adminToken });
     check('a programme in use cannot be deleted without force', blocked.status === 409);
+
+    console.log('\ncross-origin access (the website may live on another host)');
+    const origin = 'https://preshemir1.github.io';
+    const preflight = await fetch(`${BASE}/api/auth/login`, {
+      method: 'OPTIONS',
+      headers: {
+        Origin: origin,
+        'Access-Control-Request-Method': 'POST',
+        'Access-Control-Request-Headers': 'authorization,content-type',
+      },
+    });
+    check('a preflight is answered with 204', preflight.status === 204, String(preflight.status));
+    check(
+      'the calling origin is reflected in Access-Control-Allow-Origin',
+      preflight.headers.get('access-control-allow-origin') === origin,
+      String(preflight.headers.get('access-control-allow-origin'))
+    );
+    check(
+      'Authorization is an allowed request header',
+      /authorization/i.test(preflight.headers.get('access-control-allow-headers') || ''),
+      String(preflight.headers.get('access-control-allow-headers'))
+    );
+
+    const crossOriginGet = await fetch(`${BASE}/api/programs`, { headers: { Origin: origin } });
+    check(
+      'a cross-origin GET carries the CORS header',
+      crossOriginGet.headers.get('access-control-allow-origin') === origin
+    );
+
+    const crossOriginLogin = await fetch(`${BASE}/api/auth/login`, {
+      method: 'POST',
+      headers: { Origin: origin, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'admin@freshemiaacademy.edu.ng', password: ADMIN_PASSWORD }),
+    });
+    check('a cross-origin POST with a JSON body is accepted', crossOriginLogin.status === 200, String(crossOriginLogin.status));
+
+    // An allow-list must actually block everyone else.
+    const restrictedPort = PORT + 1;
+    const restrictedBase = `http://127.0.0.1:${restrictedPort}`;
+    const restricted = startServer({ ALLOWED_ORIGINS: origin }, restrictedPort);
+    try {
+      check('a server with ALLOWED_ORIGINS starts', await waitFor(restrictedBase));
+      const allowed = await fetch(`${restrictedBase}/api/programs`, { headers: { Origin: origin } });
+      check(
+        'a listed origin is allowed through',
+        allowed.status === 200 && allowed.headers.get('access-control-allow-origin') === origin
+      );
+      const blocked = await fetch(`${restrictedBase}/api/auth/login`, {
+        method: 'OPTIONS',
+        headers: { Origin: 'https://some-other-site.example', 'Access-Control-Request-Method': 'POST' },
+      });
+      check('an unlisted origin is refused at preflight', blocked.status === 403, String(blocked.status));
+      const unlistedGet = await fetch(`${restrictedBase}/api/programs`, { headers: { Origin: 'https://some-other-site.example' } });
+      check(
+        'an unlisted origin gets no CORS header, so the browser blocks the read',
+        unlistedGet.headers.get('access-control-allow-origin') === null
+      );
+    } finally {
+      restricted.kill('SIGTERM');
+    }
 
     console.log('\nclean-up');
     const removed = await call('DELETE', `/admin/applications/${id}?account=1`, { token: adminToken });

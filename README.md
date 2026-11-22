@@ -38,6 +38,8 @@ npm run smoke        # end-to-end API test on a throwaway database
 
 Before real applicants use it, set `ADMIN_PASSWORD` to something long and unique and `SEED_DEMO=0`. See [GITHUB-SETUP.md](GITHUB-SETUP.md) for deployment, domains and the security checklist.
 
+The website and the API can live on **different hosts** — GitHub Pages for the page, Render for the database. See [Pointing the site at a server](#pointing-the-site-at-a-server).
+
 ---
 
 ## How the pieces fit together
@@ -60,6 +62,34 @@ src/js/{demo,common,app}.js ┘
 **Never edit `public/index.html` by hand** — it is generated. Change `src/` (or `shared/programs.json`), run `node build.js`, and commit both.
 
 **Never commit `data/`** — it holds applicants' names, phone numbers, passport photographs and the key that signs session tokens.
+
+### Pointing the site at a server
+
+The page finds its API in this order, first match wins:
+
+1. **`?api=https://host`** in the address — also remembered, so a shared link sticks
+2. **a server saved in this browser** by the *Connect to server…* button
+3. **`window.FA_API_BASE`** — an address baked in at build time
+4. **the origin that served the page** (same-origin hosting, e.g. `node server.js`)
+
+With nothing configured, a copy that cannot reach an API falls back to the offline demo engine and shows the yellow banner — which now carries a **Connect to server…** button: paste the address of a live portal, the page checks its `/api/health`, remembers it and reloads onto the shared database. No rebuild required, so a page already published on Pages can be rescued without touching the code.
+
+To bake the address into the published artefact instead:
+
+```bash
+API_BASE=https://freshemia-academy.onrender.com node build.js   # or --api-base=…
+# built public/index.html — 273.3 kB, 3 programmes, API base: https://freshemia-academy.onrender.com
+```
+
+The committed `public/index.html` is deliberately **unbaked** (CI enforces this); deployment bakes it. Set the repository variable `API_BASE` and `.github/workflows/pages.yml` links the published site to the live portal on every push.
+
+Because the API is then called cross-origin, `server.js` sends CORS headers (preflight, `Authorization`, `PATCH`/`DELETE`) and mirrors the calling origin. By default **any** origin may call it — tokens travel in the `Authorization` header, never in cookies. Restrict it with `ALLOWED_ORIGINS`:
+
+```bash
+ALLOWED_ORIGINS=https://preshemir1.github.io        # comma-separated; https://*.onrender.com works
+```
+
+Unlisted origins get no CORS header and their preflight is refused with `403`.
 
 ### Why one HTML file?
 
@@ -96,7 +126,7 @@ freshemia-academy/
 ├── shared/programs.json       the catalogue
 ├── scripts/
 │   ├── reset.js               npm run reset
-│   └── smoke.js               npm run smoke — the end-to-end API test
+│   └── smoke.js               npm run smoke — end-to-end API + CORS test
 └── data/                      NOT in Git — created at runtime
     ├── db.json                accounts, applications, catalogue
     └── secret.key             token signing key (generated on first run)
@@ -130,7 +160,7 @@ All routes are under `/api`. Applicant routes use the applicant's bearer token, 
 
 | Method | Route | Purpose |
 |---|---|---|
-| `GET` | `/health` | Liveness + record counts |
+| `GET` | `/health` | Liveness + record counts (also what *Connect to server…* probes) |
 | `GET` | `/programs` | Catalogue with formatted fees |
 | `POST` | `/auth/signup` | Create an applicant account |
 | `POST` | `/auth/login` | Sign in (applicant or administrator) |
@@ -200,7 +230,7 @@ Type: `Iowan Old Style` (falling back to Palatino/Georgia) for headings, the sys
 
 ## Tests
 
-`npm run smoke` boots the real server against a temporary database and walks the whole lifecycle — sign up, apply, review, approve, verify, edit a fee, delete — then reports each check. It is what CI runs; nothing in `data/` is touched.
+`npm run smoke` boots the real server against a temporary database and walks the whole lifecycle — sign up, apply, review, approve, verify, edit a fee, delete — plus a cross-origin block: preflight, reflected `Access-Control-Allow-Origin`, `Authorization` in the allowed headers, a JSON `POST` from another origin, and a second server whose `ALLOWED_ORIGINS` refuses an unlisted site. 38 checks in all. It is what CI runs; nothing in `data/` is touched.
 
 ---
 

@@ -457,6 +457,58 @@ const app = express();
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
 
+/* -------------------------------------------------------------------------- */
+/* CORS                                                                       */
+/* -------------------------------------------------------------------------- */
+/* The website is often served somewhere other than this API — GitHub Pages, a */
+/* preview link, a plain file — so the API must allow cross-origin calls.      */
+/* Tokens travel in the Authorization header, never in cookies, so wildcard    */
+/* origins carry no credential-leak risk.                                      */
+/*                                                                            */
+/* ALLOWED_ORIGINS=https://preshemir1.github.io,https://admissions.example.edu */
+/*   → only those origins may call the API (wildcards like https://*.onrender  */
+/*     .com are accepted; a trailing slash is ignored)                        */
+/* ALLOWED_ORIGINS unset → every origin may call it (the default)             */
+
+const ALLOWED_ORIGINS = String(process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim().replace(/\/+$/, ''))
+  .filter(Boolean);
+
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+function originAllowed(origin) {
+  const clean = String(origin || '').replace(/\/+$/, '');
+  if (!clean) return true; // same-origin, curl, health checks, server-to-server
+  if (ALLOWED_ORIGINS.length === 0) return true;
+  return ALLOWED_ORIGINS.some((rule) => {
+    if (rule === '*') return true;
+    if (rule.includes('*')) {
+      const pattern = new RegExp('^' + rule.split('*').map(escapeRegex).join('[^/]*') + '$', 'i');
+      return pattern.test(clean);
+    }
+    return rule.toLowerCase() === clean.toLowerCase();
+  });
+}
+
+app.use((req, res, next) => {
+  const origin = req.get('origin');
+  if (origin) {
+    res.setHeader('Vary', 'Origin');
+    if (originAllowed(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, Accept');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
+      res.setHeader('Access-Control-Expose-Headers', 'Content-Type');
+      res.setHeader('Access-Control-Max-Age', '600');
+    } else if (req.method === 'OPTIONS') {
+      return res.status(403).json({ error: `Origin ${origin} is not allowed. Add it to ALLOWED_ORIGINS on the server.` });
+    }
+  }
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
+
 // Passport photographs arrive as base64 data URLs, so the body limit is generous.
 app.use(express.json({ limit: '15mb' }));
 
@@ -908,6 +960,7 @@ const server = app.listen(PORT, HOST, () => {
   console.log(`Freshemia Academy portal listening on ${base}`);
   console.log(`database: ${DB_FILE}`);
   console.log(`applications: ${db.applications.length} · students: ${db.users.filter((u) => u.role === 'student').length}`);
+  console.log(`cors: ${ALLOWED_ORIGINS.length ? ALLOWED_ORIGINS.join(', ') : 'any origin'}`);
 });
 
 for (const signal of ['SIGINT', 'SIGTERM']) {

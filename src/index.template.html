@@ -10,6 +10,7 @@
   /* theme is applied before paint so there is no light flash */
   try { if (localStorage.getItem('fa_theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark'); } catch (e) {}
 </script>
+<!-- @@API_BASE@@ -->
 <style>
 /* @@APP_CSS@@ */
 </style>
@@ -21,8 +22,11 @@
 <!-- Shown only when the file is opened without the API server (offline demo mode) -->
 <div id="demoBanner" class="demo-banner no-print hidden">
   <div class="wrap">
-    <span><b>Offline preview.</b> No portal server detected — accounts and applications are saved in <b>this browser only</b>. Run <code>npm start</code> for the live multi-user portal.</span>
-    <button id="dismissDemo" style="font:inherit;font-weight:800;color:#6d4c07;background:none;border:1px solid rgba(109,76,7,.35);border-radius:6px;padding:3px 10px;cursor:pointer;white-space:nowrap">Dismiss</button>
+    <span id="demoBannerText"><b>Offline preview.</b> No portal server detected — accounts and applications are saved in <b>this browser only</b>. Run <code>npm start</code> for the live multi-user portal.</span>
+    <span class="banner-actions">
+      <button id="connectServer" class="banner-btn" type="button">Connect to server…</button>
+      <button id="dismissDemo" class="banner-btn" type="button">Dismiss</button>
+    </span>
   </div>
 </div>
 
@@ -664,6 +668,26 @@
 </footer>
 
 <div class="toast-stack" id="toasts"></div>
+
+<!-- Connect this copy of the site to a portal server (live multi-user database) -->
+<div id="serverDialog" class="server-dialog no-print hidden" role="dialog" aria-modal="true" aria-labelledby="serverDialogTitle">
+  <div class="server-dialog-card">
+    <h3 id="serverDialogTitle">Connect to the portal server</h3>
+    <p>Point this copy of the site at a Freshemia portal so every visitor reads and writes one shared database. Paste the server address — for example <code>https://freshemia-academy.onrender.com</code>.</p>
+    <form id="serverForm" autocomplete="off">
+      <label for="serverUrl">Server address</label>
+      <input id="serverUrl" class="input" type="text" inputmode="url" placeholder="https://freshemia-academy.onrender.com" spellcheck="false">
+      <div class="server-dialog-note" id="serverCurrent"></div>
+      <div class="server-dialog-actions">
+        <button type="button" class="btn btn-ghost btn-sm" id="serverDefault">Use the default</button>
+        <span class="server-dialog-spacer"></span>
+        <button type="button" class="btn btn-ghost btn-sm" id="serverCancel">Cancel</button>
+        <button type="submit" class="btn btn-gold btn-sm" id="serverConnect">Test &amp; connect</button>
+      </div>
+      <p class="server-dialog-status" id="serverStatus" aria-live="polite"></p>
+    </form>
+  </div>
+</div>
 <!-- Everything below is inlined by build.js so this page works as one self-contained file -->
 <!-- @@APP_SCRIPTS@@ -->
 </body>

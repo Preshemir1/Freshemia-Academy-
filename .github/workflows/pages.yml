@@ -31,6 +31,12 @@ jobs:
       - run: npm ci
       - name: Rebuild the single-file website
         run: node build.js
+        env:
+          # Repository variable (Settings → Secrets and variables → Actions →
+          # Variables → API_BASE). Leave it unset and the published page talks to
+          # whatever origin serves it; set it to the Render/Railway URL and every
+          # published copy links itself to the live portal.
+          API_BASE: ${{ vars.API_BASE }}
       - name: Configure Pages (enables it on the first run)
         uses: actions/configure-pages@v5
         with:

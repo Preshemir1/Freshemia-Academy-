@@ -10,6 +10,7 @@
   /* theme is applied before paint so there is no light flash */
   try { if (localStorage.getItem('fa_theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark'); } catch (e) {}
 </script>
+<!-- No API_BASE baked in: this page talks to the origin that serves it, or to a server chosen with "Connect to server…". -->
 <style>
 /* ==========================================================================
    Freshemia Academy — Portal styles (v2)
@@ -1022,6 +1023,60 @@ html[data-theme="dark"] .alert-warn { background: var(--amber-tint); border-colo
 /* Action columns stay inside the card — no hidden delete buttons */
 table.grid th:last-child, table.grid td:last-child { padding-right: 10px; }
 .btn-icon-danger { min-width: 34px; padding: 8px 7px; }
+
+/* --------------------------------------------------------------------------
+   Offline banner actions + "Connect to server" dialog
+   -------------------------------------------------------------------------- */
+.banner-actions { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.banner-btn {
+  font: inherit;
+  font-weight: 800;
+  color: #6d4c07;
+  background: none;
+  border: 1px solid rgba(109, 76, 7, .35);
+  border-radius: 6px;
+  padding: 3px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.banner-btn:hover { background: rgba(109, 76, 7, .09); }
+.banner-btn:focus-visible { outline: 2px solid #6d4c07; outline-offset: 2px; }
+
+.server-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(6, 26, 46, .55);
+  backdrop-filter: blur(2px);
+}
+.server-dialog-card {
+  width: 100%;
+  max-width: 520px;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 26px 28px 22px;
+}
+.server-dialog-card h3 { margin-bottom: 8px; }
+.server-dialog-card p { color: var(--muted); font-size: .92rem; }
+.server-dialog-card code { font-family: var(--mono); font-size: .84rem; background: var(--cream-2); padding: 1px 5px; border-radius: 4px; }
+.server-dialog-card label { display: block; font-size: .78rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin: 16px 0 6px; }
+.server-dialog-note { font-size: .8rem; color: var(--muted); margin-top: 8px; }
+.server-dialog-actions { display: flex; align-items: center; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+.server-dialog-spacer { flex: 1; }
+.server-dialog-status { margin: 14px 0 0; font-size: .86rem; font-weight: 600; color: var(--muted); min-height: 1.2em; }
+.server-dialog-status.ok { color: var(--green); }
+.server-dialog-status.err { color: var(--red); }
+@media (max-width: 520px) {
+  .server-dialog-card { padding: 20px 18px 16px; }
+  .server-dialog-spacer { display: none; }
+}
 </style>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 3 58 11v20c0 15-11 26-26 30C17 57 6 46 6 31V11z' fill='%230b2545'/%3E%3Cpath d='M20 26h24M20 31h24M20 36h16' stroke='%23b8912f' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
   <meta name="generator" content="Freshemia Academy single-file build">
@@ -1031,8 +1086,11 @@ table.grid th:last-child, table.grid td:last-child { padding-right: 10px; }
 <!-- Shown only when the file is opened without the API server (offline demo mode) -->
 <div id="demoBanner" class="demo-banner no-print hidden">
   <div class="wrap">
-    <span><b>Offline preview.</b> No portal server detected — accounts and applications are saved in <b>this browser only</b>. Run <code>npm start</code> for the live multi-user portal.</span>
-    <button id="dismissDemo" style="font:inherit;font-weight:800;color:#6d4c07;background:none;border:1px solid rgba(109,76,7,.35);border-radius:6px;padding:3px 10px;cursor:pointer;white-space:nowrap">Dismiss</button>
+    <span id="demoBannerText"><b>Offline preview.</b> No portal server detected — accounts and applications are saved in <b>this browser only</b>. Run <code>npm start</code> for the live multi-user portal.</span>
+    <span class="banner-actions">
+      <button id="connectServer" class="banner-btn" type="button">Connect to server…</button>
+      <button id="dismissDemo" class="banner-btn" type="button">Dismiss</button>
+    </span>
   </div>
 </div>
 
@@ -1674,6 +1732,26 @@ table.grid th:last-child, table.grid td:last-child { padding-right: 10px; }
 </footer>
 
 <div class="toast-stack" id="toasts"></div>
+
+<!-- Connect this copy of the site to a portal server (live multi-user database) -->
+<div id="serverDialog" class="server-dialog no-print hidden" role="dialog" aria-modal="true" aria-labelledby="serverDialogTitle">
+  <div class="server-dialog-card">
+    <h3 id="serverDialogTitle">Connect to the portal server</h3>
+    <p>Point this copy of the site at a Freshemia portal so every visitor reads and writes one shared database. Paste the server address — for example <code>https://freshemia-academy.onrender.com</code>.</p>
+    <form id="serverForm" autocomplete="off">
+      <label for="serverUrl">Server address</label>
+      <input id="serverUrl" class="input" type="text" inputmode="url" placeholder="https://freshemia-academy.onrender.com" spellcheck="false">
+      <div class="server-dialog-note" id="serverCurrent"></div>
+      <div class="server-dialog-actions">
+        <button type="button" class="btn btn-ghost btn-sm" id="serverDefault">Use the default</button>
+        <span class="server-dialog-spacer"></span>
+        <button type="button" class="btn btn-ghost btn-sm" id="serverCancel">Cancel</button>
+        <button type="submit" class="btn btn-gold btn-sm" id="serverConnect">Test &amp; connect</button>
+      </div>
+      <p class="server-dialog-status" id="serverStatus" aria-live="polite"></p>
+    </form>
+  </div>
+</div>
 <!-- Everything below is inlined by build.js so this page works as one self-contained file -->
 <script>
 /* Programme catalogue — edit shared/programs.json, then rebuild. */
@@ -4707,6 +4785,9 @@ var qrcode = function() {
     admin: { token: 'fa_admin_token', user: 'fa_admin_user' },
   };
 
+  /* Where the page remembers a portal server chosen in the browser. */
+  const API_KEY = 'fa_api_base';
+
   /* Some browsers block localStorage for file:// pages — degrade to memory. */
   const mem = {};
   const store = {
@@ -4767,15 +4848,109 @@ var qrcode = function() {
     },
     set(role, token, user) {
       const k = KEYS[role];
+      if (!k) return;
       store.set(k.token, token);
       store.set(k.user, JSON.stringify(user));
     },
     clear(role) {
       const k = KEYS[role];
+      if (!k) return;
       store.remove(k.token);
       store.remove(k.user);
     },
   };
+
+  /* ------------------------------------------------------------------ */
+  /* Which server does this copy of the page talk to?                    */
+  /* ------------------------------------------------------------------ */
+  /* Resolution order, most specific first:                              */
+  /*   1. ?api=https://…        (also remembered, so a shared link sticks) */
+  /*   2. a server saved in this browser via "Connect to server…"        */
+  /*   3. window.FA_API_BASE    (baked in at build time by build.js)     */
+  /*   4. the origin that served the page (same-origin hosting)          */
+  /* Anything that ends up empty means "same origin".                    */
+
+  /** Turn "freshemia.onrender.com/" or "https://x/api" into "https://x". */
+  function normalizeBase(value) {
+    let base = String(value == null ? '' : value).trim();
+    if (!base) return '';
+    if (!/^https?:\/\//i.test(base)) {
+      const local = /^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])(:|$)/i.test(base);
+      base = (local ? 'http://' : 'https://') + base;
+    }
+    base = base.replace(/\/+$/, '');
+    base = base.replace(/\/api$/i, '');
+    return base;
+  }
+
+  function queryBase() {
+    try {
+      return normalizeBase(new URLSearchParams(location.search).get('api') || '');
+    } catch {
+      return '';
+    }
+  }
+
+  function savedBase() {
+    try {
+      return normalizeBase(store.get(API_KEY) || '');
+    } catch {
+      return '';
+    }
+  }
+
+  const bakedBase = normalizeBase(window.FA_API_BASE || '');
+  const fromQuery = queryBase();
+  // A link with ?api= wins once and is remembered.
+  if (fromQuery) store.set(API_KEY, fromQuery);
+  const API_BASE = fromQuery || savedBase() || bakedBase || '';
+
+  const apiOrigin = () => API_BASE || location.origin;
+
+  function setApiBase(value) {
+    const base = normalizeBase(value);
+    if (base) store.set(API_KEY, base);
+    else store.remove(API_KEY);
+    return base;
+  }
+
+  function resetApiBase() {
+    store.remove(API_KEY);
+  }
+
+  /** Ask a candidate server who it is. Throws a human-readable error if it is not a portal. */
+  async function probe(value) {
+    const base = normalizeBase(value);
+    if (!base && location.protocol === 'file:') {
+      throw new Error('Enter the address of your portal server, for example https://freshemia-academy.onrender.com');
+    }
+    const target = base || location.origin;
+    let res;
+    try {
+      res = await fetch(target + '/api/health', { headers: { Accept: 'application/json' } });
+    } catch {
+      throw new Error(
+        'Could not reach ' + target + '. Check the address, that the server is running, and that its ALLOWED_ORIGINS includes this site. ' +
+          'A page served over HTTPS can only reach an HTTPS server.'
+      );
+    }
+    if (!res.ok) throw new Error(target + ' answered with HTTP ' + res.status + '.');
+    let data = null;
+    try {
+      data = await res.json();
+    } catch {
+      throw new Error(target + ' did not answer with JSON — that is not a Freshemia portal server.');
+    }
+    if (!data || data.ok !== true) throw new Error(target + ' is not a Freshemia portal server.');
+    return { ...data, base: target };
+  }
+
+  /** Probe, then remember the server and let the caller reload. */
+  async function connect(value) {
+    const info = await probe(value);
+    setApiBase(info.base);
+    return info;
+  }
 
   let offline = false;
 
@@ -4813,14 +4988,14 @@ var qrcode = function() {
     const session = Auth.get(role);
     if (session) opts.headers.Authorization = 'Bearer ' + session.token;
 
-    // Opened straight from disk: no server to talk to.
-    if (location.protocol === 'file:') return useDemo(path, opts, role);
+    // Same origin by default; a remote portal server when one is configured.
+    const url = apiOrigin() + '/api' + path;
 
     let res;
     try {
-      res = await fetch('/api' + path, opts);
+      res = await fetch(url, opts);
     } catch {
-      // file:// or no server at all
+      // file://, a static host with no API, or an unreachable remote server.
       return useDemo(path, opts, role);
     }
     // A static host without the API returns HTML here — fall back to the demo engine.
@@ -4921,7 +5096,24 @@ var qrcode = function() {
     'no application': 'No application',
   };
 
-  const FA = { Auth, api, toast, esc, fmtDate, readImage, STATUS_LABEL, offline: false };
+  const FA = {
+    Auth,
+    api,
+    toast,
+    esc,
+    fmtDate,
+    readImage,
+    STATUS_LABEL,
+    offline: false,
+    /* server wiring */
+    apiBase: API_BASE,
+    bakedBase,
+    normalizeBase,
+    probe,
+    connect,
+    setApiBase,
+    resetApiBase,
+  };
   window.FA = FA;
 })();
 </script>
@@ -6599,6 +6791,99 @@ var qrcode = function() {
   );
 
   /* ================================================================== */
+  /* Connect to a portal server                                         */
+  /* ================================================================== */
+  /* Any copy of this page — a file on a USB stick, GitHub Pages — can be
+     pointed at a live portal. The address is checked against /api/health,
+     remembered in this browser, and the page reloads onto the shared
+     database. `?api=https://host` does the same from a link. */
+
+  const serverDialog = $('#serverDialog');
+
+  function serverLabel(base) {
+    return base || (location.protocol === 'file:' ? 'this file (offline)' : location.origin);
+  }
+
+  function openServerDialog() {
+    if (!serverDialog) return;
+    const input = $('#serverUrl');
+    const status = $('#serverStatus');
+    const current = $('#serverCurrent');
+    if (input) input.value = window.FA.apiBase || '';
+    if (status) {
+      status.textContent = '';
+      status.className = 'server-dialog-status';
+    }
+    if (current) {
+      const source = window.FA.apiBase
+        ? window.FA.apiBase === window.FA.bakedBase
+          ? 'built into this page'
+          : 'chosen in this browser'
+        : 'the default for this page';
+      current.textContent = 'Currently using ' + serverLabel(window.FA.apiBase) + ' — ' + source + '.';
+    }
+    serverDialog.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => input && input.focus(), 30);
+  }
+
+  function closeServerDialog() {
+    if (!serverDialog) return;
+    serverDialog.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  $('#connectServer')?.addEventListener('click', openServerDialog);
+  $('#serverCancel')?.addEventListener('click', closeServerDialog);
+  serverDialog?.addEventListener('click', (e) => {
+    if (e.target === serverDialog) closeServerDialog();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && serverDialog && !serverDialog.classList.contains('hidden')) closeServerDialog();
+  });
+
+  $('#serverDefault')?.addEventListener('click', () => {
+    window.FA.resetApiBase();
+    toast('Using the default server for this page. Reloading…', 'ok');
+    setTimeout(() => location.reload(), 400);
+  });
+
+  $('#serverForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const status = $('#serverStatus');
+    const button = $('#serverConnect');
+    const value = $('#serverUrl').value;
+    const label = button ? button.textContent : '';
+    if (button) {
+      button.disabled = true;
+      button.textContent = 'Checking…';
+    }
+    if (status) {
+      status.textContent = 'Contacting ' + (value || 'the server') + '…';
+      status.className = 'server-dialog-status';
+    }
+    try {
+      const info = await window.FA.connect(value);
+      if (status) {
+        status.textContent = `Connected — ${info.programmes} programmes, ${info.applications} applications. Reloading…`;
+        status.className = 'server-dialog-status ok';
+      }
+      toast('Connected to the portal server.', 'ok');
+      setTimeout(() => location.reload(), 700);
+    } catch (err) {
+      if (status) {
+        status.textContent = err.message;
+        status.className = 'server-dialog-status err';
+      }
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.textContent = label;
+      }
+    }
+  });
+
+  /* ================================================================== */
   /* Boot                                                               */
   /* ================================================================== */
   $('#navToggle')?.addEventListener('click', () => $('#mainNav').classList.toggle('open'));
@@ -6612,7 +6897,14 @@ var qrcode = function() {
   /* Offline (single-file) mode notice */
   function showOfflineBanner() {
     const banner = $('#demoBanner');
-    if (banner) banner.classList.remove('hidden');
+    if (!banner) return;
+    const text = $('#demoBannerText');
+    if (text) {
+      text.innerHTML = window.FA.apiBase
+        ? `<b>Offline preview.</b> The portal server at <code>${esc(window.FA.apiBase)}</code> could not be reached — accounts and applications are saved in <b>this browser only</b>.`
+        : '<b>Offline preview.</b> No portal server detected — accounts and applications are saved in <b>this browser only</b>. Run <code>npm start</code> for the live multi-user portal.';
+    }
+    banner.classList.remove('hidden');
   }
   window.addEventListener('fa:offline', showOfflineBanner);
   $('#dismissDemo')?.addEventListener('click', () => $('#demoBanner')?.classList.add('hidden'));
